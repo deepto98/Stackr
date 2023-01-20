@@ -1,20 +1,12 @@
-import logo from './logo.svg';
-import './App.css';
-import * as THREE from 'three';
-import { Component } from 'react';
 
-class App extends Component {
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
-  componentDidMount() {
-    //function to resize component
-    var onWindowResize = function () {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+const App = () => {
 
-    }
-    window.addEventListener('resize', onWindowResize, false);
+  const mountRef = useRef(null);
 
+  useEffect(() => {
     //Create Scene
     var scene = new THREE.Scene();
 
@@ -35,13 +27,13 @@ class App extends Component {
 
     //Add Camera
 
-    //PerspectiveCamera
+    //Perspective Camera
     // var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
     // // camera.position.set(4, 4, 4);
     // camera.position.z = 5;
     // camera.lookAt(0, 0, 0);
 
-    //OrthographicCamera
+    //Orthographic Camera
     const width = 10;
     const height = width * (window.innerHeight / window.innerWidth);
     var camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 1, 100);
@@ -49,21 +41,26 @@ class App extends Component {
     camera.lookAt(0, 0, 0);
 
     //Setup Renderer
-    var renderer = new THREE.WebGLRenderer({ antialias: true });
+    var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.render(scene, camera);
 
-    this.mount.appendChild(renderer.domElement);
-  }
+    mountRef.current.appendChild(renderer.domElement);
 
-  render() {
-    return (
-      <div>
-        <div ref={ref => (this.mount = ref)} />
+    //Resize on window size change
+    let onWindowResize = function () {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener("resize", onWindowResize, false);
 
-      </div>
-    )
-  }
+    return () => mountRef.current.removeChild(renderer.domElement);
+  }, []);
+
+  return (
+    <div ref={mountRef} />
+  );
 }
 
 export default App;
