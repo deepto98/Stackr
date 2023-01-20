@@ -15,7 +15,6 @@ const App = () => {
   return (
     <div ref={mountRef} />
   );
-
 }
 
 //This function handles creating the scene
@@ -26,8 +25,8 @@ const init = (mountRef) => {
   //Adding Cube
   var geometry = new THREE.BoxGeometry(3, 1, 3);
   var material = new THREE.MeshLambertMaterial({ color: 0xfb8e00 });
-  var cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
+  var box = new THREE.Mesh(geometry, material);
+  scene.add(box);
 
   //Add Lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
