@@ -15,17 +15,11 @@ class App extends Component {
     }
     window.addEventListener('resize', onWindowResize, false);
 
-    //Setup Renderer
-    var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    this.mount.appendChild(renderer.domElement);
-
     //Create Scene
     var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     //Adding Cube
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
+    var geometry = new THREE.BoxGeometry(3, 1, 3);
     var material = new THREE.MeshLambertMaterial({ color: 0xfb8e00 });
     var cube = new THREE.Mesh(geometry, material);
 
@@ -35,20 +29,31 @@ class App extends Component {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight =new THREE.DirectionalLight(0xffffff,0.6);
-    directionalLight.position.set(10,20,0);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.position.set(10, 20, 0);
     scene.add(directionalLight);
 
-    camera.position.z = 5;
+    //Add Camera
 
-    var animate = function () {
-      requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
-    };
+    //PerspectiveCamera
+    // var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    // // camera.position.set(4, 4, 4);
+    // camera.position.z = 5;
+    // camera.lookAt(0, 0, 0);
 
-    animate();
+    //OrthographicCamera
+    const width = 10;
+    const height = width * (window.innerHeight / window.innerWidth);
+    var camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 1, 100);
+    camera.position.set(4, 4, 4);
+    camera.lookAt(0, 0, 0);
+
+    //Setup Renderer
+    var renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.render(scene, camera);
+
+    this.mount.appendChild(renderer.domElement);
   }
 
   render() {
