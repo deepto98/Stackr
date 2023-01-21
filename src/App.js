@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 var scene, camera, renderer;
+const originalBoxSize = 3;
 
 const App = () => {
   const mountRef = useRef(null);
@@ -22,11 +23,10 @@ const init = (mountRef) => {
   //Create Scene
   scene = new THREE.Scene();
 
-  //Adding Cube
-  var geometry = new THREE.BoxGeometry(3, 1, 3);
-  var material = new THREE.MeshLambertMaterial({ color: 0xfb8e00 });
-  var box = new THREE.Mesh(geometry, material);
-  scene.add(box);
+  //Foundation
+  addLayer(0, 0, originalBoxSize, originalBoxSize)
+  //First Layer
+  addLayer(-10, 0, originalBoxSize, originalBoxSize, "x")
 
   //Add Lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -58,4 +58,34 @@ const init = (mountRef) => {
   window.addEventListener("resize", onWindowResize, false);
 
 }
+
+let stack = [];
+const boxHeight = 1;
+
+//Function to add layers
+const addLayer = (x, z, width, depth, direction) => {
+  const y = boxHeight * stack.length;
+  const layer = generateBox(x, y, z, width, depth);
+  layer.direction = direction;
+
+  stack.push(layer);
+}
+
+//Function to generate boxes
+const generateBox = (x, y, z, width, depth) => {
+
+  var geometry = new THREE.BoxGeometry(width, boxHeight, depth);
+  var color = new THREE.Color(`hsl(${30 + stack.length * 4},100%,50%)`);
+  var material = new THREE.MeshLambertMaterial({ color });
+
+  var box = new THREE.Mesh(geometry, material);
+  box.position.set(x, y, z)
+
+  scene.add(box);
+
+  return {
+    threejs: box, width, depth
+  }
+}
+
 export default App;
