@@ -1,10 +1,18 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import * as CANNON from "cannon";
 
 var scene, camera, renderer;
+var world;
 const originalBoxSize = 3;
 var gameStarted = false;
+
+let stack = [];
+let overhangs = [];
+const boxHeight = 1;
+
+var lastTime;
 
 const App = () => {
   const mountRef = useRef(null);
@@ -42,6 +50,13 @@ const App = () => {
           topLayer.threejs.scale[direction] = overlap / size;
           topLayer.threejs.position[direction] -= delta / 2;
 
+          //Update CannonJS model
+          topLayer.cannonjs.position[direction] -= delta / 2
+          //Replace CannonJS shape with smaller shape
+          const shape = new CANNON.Box(new CANNON.Vec3(newWidth / 2, boxHeight / 2, newDepth / 2));
+          topLayer.cannonjs.shapes = [];
+          topLayer.cannonjs.addShape(shape);
+
           //Calculate hanging portion to simulate fall
           const hangingShift = (overlap / 2 + hangingSize / 2) * Math.sign(delta);
           const hangingX =
@@ -52,7 +67,7 @@ const App = () => {
               topLayer.threejs.position.z;
           const hangingWidth = direction === "x" ? hangingSize : newWidth;
           const hangingDepth = direction === "z" ? hangingSize : newDepth;
-          addOverhang(hangingX,hangingZ,hangingWidth,hangingDepth)
+          addOverhang(hangingX, hangingZ, hangingWidth, hangingDepth)
 
           //Add next layer
           const nextX = direction === "x" ? topLayer.threejs.position.x : -10;
@@ -77,6 +92,17 @@ const App = () => {
 
 //This function handles creating the scene
 const init = (mountRef) => {
+
+  lastTime = 0;
+  stack = [];
+  overhangs = [];
+
+  //Setup world for CannonJS
+  world = new CANNON.World();
+  world.gravity.set(0, -10, 0);
+  world.broadphase = new CANNON.NaiveBroadphase();
+  world.solver.iterations = 40;
+
   //Create Scene
   scene = new THREE.Scene();
 
@@ -96,13 +122,19 @@ const init = (mountRef) => {
   //Add Orthographic Camera
   const width = 10;
   const height = width * (window.innerHeight / window.innerWidth);
-  camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 1, 100);
+   camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 0.1, 1000);
+
+  // camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+
   camera.position.set(4, 4, 4);
   camera.lookAt(0, 0, 0);
+
+  // var camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 1, 100);
 
   //Setup Renderer
   renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
+  // renderer.setAnimationLoop(animation);
 
   renderer.render(scene, camera);
   mountRef.current.appendChild(renderer.domElement);
@@ -117,10 +149,6 @@ const init = (mountRef) => {
 
 }
 
-let stack = [];
-let overhangs = [];
-const boxHeight = 1;
-
 //Function to add layers
 const addLayer = (x, z, width, depth, direction) => {
   const y = boxHeight * stack.length;
@@ -133,36 +161,57 @@ const addLayer = (x, z, width, depth, direction) => {
 
 // Function to add overhangs
 const addOverhang = (x, z, width, depth) => {
-  const y = boxHeight * (stack.length -1);
-  const overhang = generateBox(x, y, z, width, depth);
+  const y = boxHeight * (stack.length - 1);
+  const overhang = generateBox(x, y, z, width, depth, true);
   overhangs.push(overhang);
 }
-//Function to generate boxes
-const generateBox = (x, y, z, width, depth) => {
 
+//Function to generate boxes
+const generateBox = (x, y, z, width, depth, falls) => {
+
+  //Box for Three.js
   var geometry = new THREE.BoxGeometry(width, boxHeight, depth);
   var color = new THREE.Color(`hsl(${30 + stack.length * 4},100%,50%)`);
   var material = new THREE.MeshLambertMaterial({ color });
 
-  var box = new THREE.Mesh(geometry, material);
-  box.position.set(x, y, z)
+  var mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(x, y, z)
+  scene.add(mesh);
 
-  scene.add(box);
+  //Duplicate same box in CannonJS
+  const shape = new CANNON.Box(new CANNON.Vec3(width / 2, boxHeight / 2, depth / 2));
+  let mass = falls ? 5 : 0;
+  const body = new CANNON.Body({ mass, shape });
+  body.position.set(x, y, z);
+  world.addBody(body)
 
   return {
-    threejs: box, width, depth
+    threejs: mesh, cannonjs: body, width, depth
   }
 }
 
 const animation = () => {
-  const speed = 0.15
+  const speed = 0.1
   const topLayer = stack[stack.length - 1];
   topLayer.threejs.position[topLayer.direction] += speed
+  topLayer.cannonjs.position[topLayer.direction] += speed
 
   if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
     camera.position.y += speed
   }
+  updatePhysics()
+
   renderer.render(scene, camera);
 }
 
+const updatePhysics = () => {
+  world.step(1 / 360);
+
+  //Copy coordinates from Cannon to Three
+  overhangs.forEach((element) => {
+    element.threejs.position.copy(element.cannonjs.position)
+    element.threejs.quaternion.copy(element.cannonjs.quaternion)
+  });
+
+}
 export default App;
