@@ -19,7 +19,21 @@ const App = () => {
         gameStarted = true;
       } else {
         const topLayer = stack[stack.length - 1];
+        const lastLayer = stack[stack.length - 2];
         const direction = topLayer.direction;
+
+        //Find overlap between current and last box
+        const delta = topLayer.threejs.position[direction] - lastLayer.threejs.position[direction]
+        const hangingSize = Math.abs(delta);
+        const size = direction == "x" ? topLayer.width : topLayer.depth;
+        const overlap = size - hangingSize;
+
+        //If there is an overlap, continue the game, otherwise stop
+        if (overlap > 0) {
+
+        } else {
+
+        }
 
         //Build Next Layer
         const nextX = direction === "x" ? 0 : -10;
@@ -78,7 +92,7 @@ const init = (mountRef) => {
   camera.lookAt(0, 0, 0);
 
   //Setup Renderer
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   renderer.render(scene, camera);
