@@ -42,6 +42,18 @@ const App = () => {
           topLayer.threejs.scale[direction] = overlap / size;
           topLayer.threejs.position[direction] -= delta / 2;
 
+          //Calculate hanging portion to simulate fall
+          const hangingShift = (overlap / 2 + hangingSize / 2) * Math.sign(delta);
+          const hangingX =
+            direction === "x" ? topLayer.threejs.position.x + hangingShift :
+              topLayer.threejs.position.x;
+          const hangingZ =
+            direction === "z" ? topLayer.threejs.position.z + hangingShift :
+              topLayer.threejs.position.z;
+          const hangingWidth = direction === "x" ? hangingSize : newWidth;
+          const hangingDepth = direction === "z" ? hangingSize : newDepth;
+          // addOverhang(hangingX,hangingZ,hangingWidth,hangingDepth)
+
           //Add next layer
           const nextX = direction === "x" ? topLayer.threejs.position.x : -10;
           const nextZ = direction === "z" ? topLayer.threejs.position.z : -10;
@@ -49,7 +61,7 @@ const App = () => {
           addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
 
         } else {
-
+          //Stop Game
         }
       }
     });
@@ -61,16 +73,6 @@ const App = () => {
   return (
     <div ref={mountRef} />
   );
-}
-const animation = () => {
-  const speed = 0.15
-  const topLayer = stack[stack.length - 1];
-  topLayer.threejs.position[topLayer.direction] += speed
-
-  if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
-    camera.position.y += speed
-  }
-  renderer.render(scene, camera);
 }
 
 //This function handles creating the scene
@@ -142,6 +144,17 @@ const generateBox = (x, y, z, width, depth) => {
   return {
     threejs: box, width, depth
   }
+}
+
+const animation = () => {
+  const speed = 0.15
+  const topLayer = stack[stack.length - 1];
+  topLayer.threejs.position[topLayer.direction] += speed
+
+  if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+    camera.position.y += speed
+  }
+  renderer.render(scene, camera);
 }
 
 export default App;
