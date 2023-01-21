@@ -52,7 +52,7 @@ const App = () => {
               topLayer.threejs.position.z;
           const hangingWidth = direction === "x" ? hangingSize : newWidth;
           const hangingDepth = direction === "z" ? hangingSize : newDepth;
-          // addOverhang(hangingX,hangingZ,hangingWidth,hangingDepth)
+          addOverhang(hangingX,hangingZ,hangingWidth,hangingDepth)
 
           //Add next layer
           const nextX = direction === "x" ? topLayer.threejs.position.x : -10;
@@ -118,6 +118,7 @@ const init = (mountRef) => {
 }
 
 let stack = [];
+let overhangs = [];
 const boxHeight = 1;
 
 //Function to add layers
@@ -129,6 +130,13 @@ const addLayer = (x, z, width, depth, direction) => {
   stack.push(layer);
 }
 
+
+// Function to add overhangs
+const addOverhang = (x, z, width, depth) => {
+  const y = boxHeight * (stack.length -1);
+  const overhang = generateBox(x, y, z, width, depth);
+  overhangs.push(overhang);
+}
 //Function to generate boxes
 const generateBox = (x, y, z, width, depth) => {
 
