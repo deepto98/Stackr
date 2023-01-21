@@ -30,20 +30,27 @@ const App = () => {
 
         //If there is an overlap, continue the game, otherwise stop
         if (overlap > 0) {
+          //cut layer into remaining box and hanging part which is to fall
+          const newWidth = direction == "x" ? overlap : topLayer.width;
+          const newDepth = direction == "z" ? overlap : topLayer.depth;
+
+          //update toplayer
+          topLayer.width = newWidth;
+          topLayer.depth = newDepth;
+
+          //Update three.js model
+          topLayer.threejs.scale[direction] = overlap / size;
+          topLayer.threejs.position[direction] -= delta / 2;
+
+          //Add next layer
+          const nextX = direction === "x" ? topLayer.threejs.position.x : -10;
+          const nextZ = direction === "z" ? topLayer.threejs.position.z : -10;
+          const nextDirection = direction === "x" ? "z" : "x";
+          addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
 
         } else {
 
         }
-
-        //Build Next Layer
-        const nextX = direction === "x" ? 0 : -10;
-        const nextZ = direction === "z" ? 0 : -10;
-        const newWidth = originalBoxSize;
-        const newDepth = originalBoxSize;
-        const nextDirection = direction === "x" ? "z" : "x";
-
-        addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
-
       }
     });
 
