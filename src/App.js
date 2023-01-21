@@ -4,18 +4,52 @@ import * as THREE from "three";
 
 var scene, camera, renderer;
 const originalBoxSize = 3;
+var gameStarted = false;
 
 const App = () => {
   const mountRef = useRef(null);
 
   useEffect(() => {
+
     init(mountRef)
+
+    window.addEventListener("click", () => {
+      if (!gameStarted) {
+        renderer.setAnimationLoop(animation);
+        gameStarted = true;
+      } else {
+        const topLayer = stack[stack.length - 1];
+        const direction = topLayer.direction;
+
+        //Build Next Layer
+        const nextX = direction === "x" ? 0 : -10;
+        const nextZ = direction === "z" ? 0 : -10;
+        const newWidth = originalBoxSize;
+        const newDepth = originalBoxSize;
+        const nextDirection = direction === "x" ? "z" : "x";
+
+        addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
+
+      }
+    });
+
+
     return () => mountRef.current.removeChild(renderer.domElement);
   });
 
   return (
     <div ref={mountRef} />
   );
+}
+const animation = () => {
+  const speed = 0.15
+  const topLayer = stack[stack.length - 1];
+  topLayer.threejs.position[topLayer.direction] += speed
+
+  if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+    camera.position.y += speed
+  }
+  renderer.render(scene, camera);
 }
 
 //This function handles creating the scene
@@ -46,6 +80,7 @@ const init = (mountRef) => {
   //Setup Renderer
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
+
   renderer.render(scene, camera);
   mountRef.current.appendChild(renderer.domElement);
 
